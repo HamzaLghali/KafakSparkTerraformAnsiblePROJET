@@ -1,0 +1,35 @@
+---
+# Common variables for all hosts
+ansible_ssh_private_key_file: /home/ec2-user/kafka-spark-keypair.pem
+ansible_python_interpreter: /usr/bin/python3
+ansible_user: ubuntu  # Default user for Ubuntu instances
+
+# Java version
+java_version: "11"
+
+# Spark configuration
+spark_version: "3.5.0"
+spark_hadoop_version: "3"
+spark_download_url: "https://archive.apache.org/dist/spark/spark-{{ spark_version }}/spark-{{ spark_version }}-bin-hadoop{{ spark_hadoop_version }}.tgz"
+spark_home: "/opt/spark"
+spark_master_port: 7077
+spark_master_webui_port: 8080
+
+# Kafka configuration
+kafka_version: "3.6.1"
+scala_version: "2.13"
+kafka_download_url: "https://archive.apache.org/dist/kafka/{{ kafka_version }}/kafka_{{ scala_version }}-{{ kafka_version }}.tgz"
+kafka_home: "/opt/kafka"
+kafka_port: 9092
+
+# Zookeeper configuration
+zookeeper_port: 2181
+zookeeper_data_dir: "/var/lib/zookeeper"
+
+# AWS S3 configuration
+aws_region: "eu-north-1"
+s3_bucket_name: "your-bucket-name"
+
+# Application user
+app_user: "spark"
+app_group: "spark"

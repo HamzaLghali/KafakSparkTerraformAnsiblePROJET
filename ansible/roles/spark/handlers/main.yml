@@ -1,0 +1,14 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart spark master
+  systemd:
+    name: spark-master
+    state: restarted
+
+- name: restart spark worker
+  systemd:
+    name: spark-worker
+    state: restarted

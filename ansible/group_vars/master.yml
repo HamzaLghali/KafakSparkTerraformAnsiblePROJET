@@ -1,0 +1,5 @@
+---
+# Master node specific variables
+spark_master_host: "{{ ansible_host }}"
+kafka_broker_id: 1
+kafka_log_dirs: "/var/lib/kafka-logs"

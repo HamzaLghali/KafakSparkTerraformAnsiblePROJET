@@ -1,0 +1,5 @@
+---
+# Worker nodes specific variables
+spark_worker_cores: 2
+spark_worker_memory: "4g"
+spark_worker_instances: 1

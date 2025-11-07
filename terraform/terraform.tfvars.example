@@ -1,0 +1,37 @@
+# Example terraform.tfvars file
+# Copy this to terraform.tfvars and fill in your values
+
+aws_region   = "us-east-1"
+project_name = "spark-kafka-cluster"
+
+# REQUIRED: Your EC2 key pair name
+ssh_key_name = "your-key-pair-name"
+
+# REQUIRED: Your public IP (get from: curl ifconfig.me)
+your_ip = "0.0.0.0/0"
+
+# REQUIRED: IDs of your existing VPC and subnets
+existing_vpc_id            = "vpc-xxxxxxxxxxxxx"     # Your existing VPC ID
+existing_public_subnet_id  = "subnet-xxxxxxxxxxxxx"  # Your existing public subnet ID
+existing_private_subnet_id = "subnet-xxxxxxxxxxxxx"  # Your existing private subnet ID
+
+# OPTIONAL: If you have existing security groups, provide their IDs
+# Leave empty ("") to create new security groups
+existing_bastion_sg_id = ""  # e.g., "sg-xxxxxxxxxxxxx" or leave empty
+existing_master_sg_id  = ""  # e.g., "sg-xxxxxxxxxxxxx" or leave empty
+existing_worker_sg_id  = ""  # e.g., "sg-xxxxxxxxxxxxx" or leave empty
+
+# AMI ID for your region
+# Amazon Linux 2023 (recommended):
+#   us-east-1: ami-0fff1b9a61dec8a5f
+#   us-west-2: ami-0b8c6b923777519db
+# Red Hat 9: Check AWS Marketplace
+ami_id = "ami-0fff1b9a61dec8a5f"
+
+# Optional: Customize instance types and count
+master_instance_type = "t3.medium"
+worker_instance_type = "t3.medium"
+worker_count         = 2
+
+# Optional: Customize network CIDRs (for security group rules)
+private_subnet_cidr = "10.0.2.0/24"  # Match your actual private subnet CIDR

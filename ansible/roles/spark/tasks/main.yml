@@ -1,0 +1,84 @@
+---
+- name: Download Spark
+  get_url:
+    url: "{{ spark_download_url }}"
+    dest: /tmp/spark.tgz
+    mode: '0644'
+
+- name: Create Spark installation directory
+  file:
+    path: "{{ spark_home }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+
+- name: Extract Spark archive
+  unarchive:
+    src: /tmp/spark.tgz
+    dest: "{{ spark_home }}"
+    remote_src: yes
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    extra_opts: [--strip-components=1]
+
+- name: Create Spark directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+  loop:
+    - "{{ spark_home }}/logs"
+    - "{{ spark_home }}/work"
+    - "{{ spark_home }}/tmp"
+
+- name: Set Spark environment variables
+  blockinfile:
+    path: /etc/profile.d/spark.sh
+    create: yes
+    block: |
+      export SPARK_HOME={{ spark_home }}
+      export PATH=$SPARK_HOME/bin:$SPARK_HOME/sbin:$PATH
+    mode: '0644'
+
+- name: Configure Spark defaults
+  template:
+    src: spark-defaults.conf.j2
+    dest: "{{ spark_home }}/conf/spark-defaults.conf"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+
+- name: Configure Spark environment
+  template:
+    src: spark-env.sh.j2
+    dest: "{{ spark_home }}/conf/spark-env.sh"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+
+- name: Install AWS SDK for S3 integration
+  get_url:
+    url: "https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/{{ spark_hadoop_version }}.3.4/hadoop-aws-{{ spark_hadoop_version }}.3.4.jar"
+    dest: "{{ spark_home }}/jars/hadoop-aws-{{ spark_hadoop_version }}.3.4.jar"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+
+- name: Install AWS Java SDK
+  get_url:
+    url: "https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar"
+    dest: "{{ spark_home }}/jars/aws-java-sdk-bundle-1.12.262.jar"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+
+- name: Include master tasks
+  include_tasks: master.yml
+  when: "'spark_master' in group_names"
+
+- name: Include worker tasks
+  include_tasks: worker.yml
+  when: "'spark_workers' in group_names"

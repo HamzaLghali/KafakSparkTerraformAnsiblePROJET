@@ -1,0 +1,42 @@
+---
+- name: Install Java OpenJDK (Debian/Ubuntu)
+  apt:
+    name: "openjdk-{{ java_version }}-jdk"
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Java OpenJDK (RedHat)
+  yum:
+    name: "java-{{ java_version }}-openjdk-devel"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Find JAVA_HOME path
+  shell: "dirname $(dirname $(readlink -f $(which java)))"
+  register: java_home_path
+  changed_when: false
+
+- name: Set JAVA_HOME environment variable
+  lineinfile:
+    path: /etc/environment
+    line: "JAVA_HOME={{ java_home_path.stdout }}"
+    create: yes
+
+- name: Add JAVA_HOME to profile
+  blockinfile:
+    path: /etc/profile.d/java.sh
+    create: yes
+    block: |
+      export JAVA_HOME={{ java_home_path.stdout }}
+      export PATH=$JAVA_HOME/bin:$PATH
+    mode: '0644'
+
+- name: Verify Java installation
+  command: java -version
+  register: java_version_output
+  changed_when: false
+
+- name: Display Java version
+  debug:
+    var: java_version_output.stderr_lines

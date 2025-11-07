@@ -1,0 +1,21 @@
+---
+- name: Create Spark master systemd service
+  template:
+    src: spark-master.service.j2
+    dest: /etc/systemd/system/spark-master.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart spark master
+
+- name: Enable and start Spark master service
+  systemd:
+    name: spark-master
+    enabled: yes
+    state: started
+
+- name: Wait for Spark master to be ready
+  wait_for:
+    port: "{{ spark_master_port }}"
+    delay: 5
+    timeout: 60

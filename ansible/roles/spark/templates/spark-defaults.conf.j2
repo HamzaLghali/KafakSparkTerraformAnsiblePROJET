@@ -1,0 +1,11 @@
+spark.master                     spark://{{ hostvars[groups['master'][0]]['ansible_host'] }}:{{ spark_master_port }}
+spark.eventLog.enabled           true
+spark.eventLog.dir               {{ spark_home }}/logs
+spark.history.fs.logDirectory    {{ spark_home }}/logs
+spark.executor.memory            2g
+spark.driver.memory              2g
+
+# S3 Configuration
+spark.hadoop.fs.s3a.impl                     org.apache.hadoop.fs.s3a.S3AFileSystem
+spark.hadoop.fs.s3a.aws.credentials.provider com.amazonaws.auth.InstanceProfileCredentialsProvider
+spark.hadoop.fs.s3a.endpoint                 s3.{{ aws_region }}.amazonaws.com

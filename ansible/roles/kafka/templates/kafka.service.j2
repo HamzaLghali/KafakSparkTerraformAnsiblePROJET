@@ -1,0 +1,18 @@
+[Unit]
+Description=Apache Kafka
+After=zookeeper.service
+Requires=zookeeper.service
+
+[Service]
+Type=simple
+User={{ app_user }}
+Group={{ app_group }}
+Environment="JAVA_HOME=/usr/lib/jvm/java-{{ java_version }}-openjdk"
+Environment="KAFKA_HEAP_OPTS=-Xmx1G -Xms1G"
+ExecStart={{ kafka_home }}/bin/kafka-server-start.sh {{ kafka_home }}/config/server.properties
+ExecStop={{ kafka_home }}/bin/kafka-server-stop.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

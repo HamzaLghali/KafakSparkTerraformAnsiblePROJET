@@ -1,0 +1,86 @@
+---
+- name: Wait for apt lock to be released
+  shell: while fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do sleep 1; done
+  when: ansible_os_family == "Debian"
+  changed_when: false
+  failed_when: false
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  retries: 5
+  delay: 10
+  register: apt_update
+  until: apt_update is success
+  when: ansible_os_family == "Debian"
+
+- name: Upgrade system packages (Debian/Ubuntu)
+  apt:
+    upgrade: dist
+  when: ansible_os_family == "Debian"
+  retries: 3
+  delay: 10
+
+- name: Update system packages (RedHat)
+  yum:
+    name: '*'
+    state: latest
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
+- name: Install common packages (Debian/Ubuntu)
+  apt:
+    name:
+      - wget
+      - curl
+      - tar
+      - git
+      - vim
+      - htop
+      - net-tools
+      - python3
+      - python3-pip
+      - openjdk-11-jdk
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Install common packages (RedHat)
+  yum:
+    name:
+      - wget
+      - curl
+      - tar
+      - git
+      - vim
+      - htop
+      - net-tools
+      - python3
+      - python3-pip
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Create application group
+  group:
+    name: "{{ app_group }}"
+    state: present
+
+- name: Create application user
+  user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    create_home: yes
+    shell: /bin/bash
+    state: present
+
+- name: Set system limits for the application user
+  pam_limits:
+    domain: "{{ app_user }}"
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { limit_type: 'soft', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'hard', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'soft', limit_item: 'nproc', value: '32768' }
+    - { limit_type: 'hard', limit_item: 'nproc', value: '32768' }

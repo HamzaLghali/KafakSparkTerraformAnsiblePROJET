@@ -1,0 +1,46 @@
+---
+- name: Create Zookeeper data directory
+  file:
+    path: "{{ zookeeper_data_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0755'
+
+- name: Create Zookeeper myid file
+  copy:
+    content: "1"
+    dest: "{{ zookeeper_data_dir }}/myid"
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+
+- name: Create Zookeeper configuration directory
+  file:
+    path: /etc/zookeeper
+    state: directory
+    mode: '0755'
+
+- name: Configure Zookeeper properties
+  template:
+    src: zookeeper.properties.j2
+    dest: /etc/zookeeper/zookeeper.properties
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+    mode: '0644'
+  notify: restart zookeeper
+
+- name: Create Zookeeper systemd service
+  template:
+    src: zookeeper.service.j2
+    dest: /etc/systemd/system/zookeeper.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart zookeeper
+
+- name: Enable and start Zookeeper service
+  systemd:
+    name: zookeeper
+    enabled: yes
+    state: started

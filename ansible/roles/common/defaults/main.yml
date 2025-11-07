@@ -1,0 +1,4 @@
+---
+# Default variables for common role
+app_user: "spark"
+app_group: "spark"

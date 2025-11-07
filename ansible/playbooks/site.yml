@@ -1,0 +1,91 @@
+---
+- name: Deploy and Configure EC2 Infrastructure
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Display target host information
+      debug:
+        msg: "Configuring {{ inventory_hostname }} ({{ ansible_host }})"
+
+- name: Configure Bastion Host
+  hosts: bastion
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+
+  tasks:
+    - name: Ensure Ansible is installed
+      yum:
+        name: ansible
+        state: present
+      when: ansible_os_family == "RedHat"
+      ignore_errors: yes  # Skip if already installed or version conflict
+
+- name: Configure Master Node
+  hosts: master
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+    - java
+    - zookeeper
+    - kafka
+    - spark
+
+  tasks:
+    - name: Display master services status
+      debug:
+        msg: |
+          Master node configured with:
+          - Zookeeper on port {{ zookeeper_port }}
+          - Kafka on port {{ kafka_port }}
+          - Spark Master on port {{ spark_master_port }}
+          - Spark Master Web UI on port {{ spark_master_webui_port }}
+
+- name: Configure Worker Nodes
+  hosts: workers
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - common
+    - java
+    - spark
+
+  tasks:
+    - name: Display worker services status
+      debug:
+        msg: "Worker node {{ inventory_hostname }} configured with Spark Worker"
+
+- name: Verification and Status
+  hosts: all
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Verify services are running
+      systemd:
+        name: "{{ item }}"
+        state: started
+      loop:
+        - zookeeper
+        - kafka
+        - spark-master
+      when: "'master' in group_names"
+      ignore_errors: yes
+
+    - name: Verify Spark worker is running
+      systemd:
+        name: spark-worker
+        state: started
+      when: "'workers' in group_names"
+      ignore_errors: yes
+
+    - name: Final status message
+      debug:
+        msg: "Configuration complete for {{ inventory_hostname }}"
