@@ -9,21 +9,21 @@
       debug:
         msg: "Configuring {{ inventory_hostname }} ({{ ansible_host }})"
 
-- name: Configure Bastion Host
-  hosts: bastion
-  become: yes
-  gather_facts: yes
+# - name: Configure Bastion Host
+#   hosts: bastion
+#   become: yes
+#   gather_facts: yes
 
-  roles:
-    - common
+#   roles:
+#     - common
 
-  tasks:
-    - name: Ensure Ansible is installed
-      yum:
-        name: ansible
-        state: present
-      when: ansible_os_family == "RedHat"
-      ignore_errors: yes  # Skip if already installed or version conflict
+#   tasks:
+#     - name: Ensure Ansible is installed
+#       yum:
+#         name: ansible
+#         state: present
+#       when: ansible_os_family == "RedHat"
+#       ignore_errors: yes  # Skip if already installed or version conflict
 
 - name: Configure Master Node
   hosts: master

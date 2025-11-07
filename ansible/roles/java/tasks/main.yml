@@ -32,6 +32,13 @@
       export PATH=$JAVA_HOME/bin:$PATH
     mode: '0644'
 
+- name: Create symlink for Kafka compatibility (Ubuntu)
+  file:
+    src: "{{ java_home_path.stdout }}"
+    dest: "/usr/lib/jvm/java-{{ java_version }}-openjdk"
+    state: link
+  when: ansible_os_family == "Debian"
+
 - name: Verify Java installation
   command: java -version
   register: java_version_output

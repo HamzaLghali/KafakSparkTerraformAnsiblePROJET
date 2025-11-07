@@ -7,7 +7,7 @@ Requires=network.target
 Type=simple
 User={{ app_user }}
 Group={{ app_group }}
-Environment="JAVA_HOME=/usr/lib/jvm/java-{{ java_version }}-openjdk"
+EnvironmentFile=-/etc/environment
 ExecStart={{ kafka_home }}/bin/zookeeper-server-start.sh /etc/zookeeper/zookeeper.properties
 ExecStop={{ kafka_home }}/bin/zookeeper-server-stop.sh
 Restart=on-failure

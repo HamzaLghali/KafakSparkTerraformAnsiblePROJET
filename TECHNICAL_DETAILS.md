@@ -864,6 +864,21 @@ df.write.parquet("s3a://my-bucket/output/")
 **Purpose:** Master + Workers
 **Internet Access:** Via NAT Gateway
 
+**NAT Gateway Details:**
+- **Location:** Public subnet (subnet-0a0a5d9cf662dd381)
+- **Purpose:** Provides internet access for private subnet instances
+- **Cost:** ~$32/month + data transfer charges
+- **Elastic IP:** Associated for stable outbound IP address
+- **Created:** Manually via AWS CLI (not in Terraform initially)
+- **Required for:** Package updates, downloading Kafka/Spark binaries, S3 access
+
+**Why NAT Gateway is Critical:**
+- Private instances have no direct internet access
+- Required for `apt update` and `apt install` commands
+- Needed to download Apache Kafka and Spark from archive.apache.org
+- Enables AWS SDK to download dependencies
+- S3 access via AWS endpoints
+
 ---
 
 ### Routing
@@ -1239,6 +1254,72 @@ ssh -i /home/ec2-user/kafka-spark-keypair.pem ubuntu@10.0.136.17
 
 # Verify security group
 aws ec2 describe-security-groups --group-ids sg-xxx
+
+# For Ansible, ensure ansible.cfg has private_key_file set
+grep private_key_file /home/ec2-user/ansible/ansible.cfg
+
+# Test Ansible connectivity
+ansible all -m ping -i inventories/hosts.ini
+```
+
+#### Issue: Ansible "variable is undefined" errors
+**Symptoms:** Tasks fail with "'variable_name' is undefined"
+**Solutions:**
+```bash
+# Create defaults/main.yml in each role
+# Example for kafka role:
+cat > roles/kafka/defaults/main.yml << 'EOF'
+---
+kafka_version: "3.6.1"
+kafka_port: 9092
+kafka_log_dirs: "/var/lib/kafka-logs"
+kafka_broker_id: 1
+zookeeper_port: 2181
+app_user: "spark"
+app_group: "spark"
+EOF
+
+# Verify group_vars/all.yml exists and has correct variables
+cat group_vars/all.yml
+```
+
+#### Issue: Private instances can't reach internet
+**Symptoms:** apt update fails, can't download packages
+**Solutions:**
+```bash
+# Verify NAT Gateway exists
+aws ec2 describe-nat-gateways --region eu-north-1
+
+# Check route table has NAT Gateway route
+aws ec2 describe-route-tables --filters "Name=association.subnet-id,Values=subnet-0968e7f834411717e" --region eu-north-1
+
+# Create NAT Gateway if missing (see SETUP_STEPS.md Phase 3 step 11)
+
+# Verify security group allows outbound traffic
+aws ec2 describe-security-groups --group-id sg-052db11f6e080eef4 \
+  --query 'SecurityGroups[0].IpPermissionsEgress' --region eu-north-1
+
+# Test connectivity from instance
+ssh -i kafka-spark-keypair.pem ubuntu@10.0.136.17 "curl -I https://archive.apache.org"
+```
+
+#### Issue: Ansible SSH connection keeps dropping
+**Symptoms:** "Failed to connect to the host via ssh" intermittently
+**Solutions:**
+```bash
+# Clean up old SSH control sockets
+rm -f /tmp/ansible-ssh-*
+
+# Test direct SSH connectivity
+ssh -i /home/ec2-user/kafka-spark-keypair.pem ubuntu@10.0.136.17 "echo OK"
+
+# Verify all hosts before running playbook
+ansible all -m ping -i inventories/hosts.ini
+
+# Run playbook with connection test first
+cd /home/ec2-user/ansible
+ansible master -m ping -i inventories/hosts.ini && \
+ansible-playbook -i inventories/hosts.ini playbooks/site.yml
 ```
 
 #### Issue: Out of memory errors in Spark

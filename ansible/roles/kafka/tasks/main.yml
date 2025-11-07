@@ -65,6 +65,7 @@
 
 - name: Wait for Kafka to be ready
   wait_for:
+    host: "{{ ansible_host }}"
     port: "{{ kafka_port }}"
     delay: 5
     timeout: 60

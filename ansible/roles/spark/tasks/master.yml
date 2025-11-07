@@ -16,6 +16,7 @@
 
 - name: Wait for Spark master to be ready
   wait_for:
+    host: "{{ ansible_host }}"
     port: "{{ spark_master_port }}"
     delay: 5
     timeout: 60

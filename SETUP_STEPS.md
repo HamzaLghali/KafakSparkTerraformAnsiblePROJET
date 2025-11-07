@@ -257,11 +257,70 @@ ansible all -m ping -i inventories/hosts.ini
 # Created defaults/main.yml in each role with default variables
 ```
 
-**11. Running Ansible playbook:**
+**11. Created NAT Gateway for internet access:**
+```bash
+# Private subnet instances couldn't reach internet for package updates
+# Created NAT Gateway in public subnet
+
+# Allocate Elastic IP
+NAT_EIP_ALLOC_ID=$(aws ec2 allocate-address --domain vpc --region eu-north-1 --query 'AllocationId' --output text)
+# Result: eipalloc-0a1b2c3d4e5f6g7h8 (example)
+
+# Create NAT Gateway
+NAT_GW_ID=$(aws ec2 create-nat-gateway \
+  --subnet-id subnet-0a0a5d9cf662dd381 \
+  --allocation-id $NAT_EIP_ALLOC_ID \
+  --region eu-north-1 \
+  --query 'NatGateway.NatGatewayId' --output text)
+
+# Wait for availability
+aws ec2 wait nat-gateway-available --nat-gateway-ids $NAT_GW_ID --region eu-north-1
+
+# Add route to NAT Gateway in private route table
+PRIVATE_RT_ID=$(aws ec2 describe-route-tables \
+  --filters "Name=association.subnet-id,Values=subnet-0968e7f834411717e" \
+  --region eu-north-1 \
+  --query 'RouteTables[0].RouteTableId' --output text)
+
+aws ec2 create-route \
+  --route-table-id $PRIVATE_RT_ID \
+  --destination-cidr-block 0.0.0.0/0 \
+  --nat-gateway-id $NAT_GW_ID \
+  --region eu-north-1
+```
+
+**12. Updated security group egress rules:**
+```bash
+# Added outbound internet access for master and workers
+
+# Master security group
+aws ec2 authorize-security-group-egress \
+  --group-id sg-052db11f6e080eef4 \
+  --ip-permissions IpProtocol=-1,IpRanges='[{CidrIp=0.0.0.0/0}]' \
+  --region eu-north-1
+
+# Worker security group
+aws ec2 authorize-security-group-egress \
+  --group-id sg-09ec1280749c7ce01 \
+  --ip-permissions IpProtocol=-1,IpRanges='[{CidrIp=0.0.0.0/0}]' \
+  --region eu-north-1
+```
+
+**13. Fixed Ansible SSH configuration:**
+```bash
+# Added private_key_file to ansible.cfg
+echo "private_key_file = /home/ec2-user/kafka-spark-keypair.pem" >> ~/ansible/ansible.cfg
+```
+
+**14. Verified connectivity and ran playbook:**
 ```bash
 cd ~/ansible
+
+# Test ping to all hosts
+ansible all -m ping -i inventories/hosts.ini
+
+# Run deployment playbook
 ansible-playbook -i inventories/hosts.ini playbooks/site.yml
-# Currently in progress...
 ```
 
 ---

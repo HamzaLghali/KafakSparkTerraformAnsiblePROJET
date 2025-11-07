@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-export JAVA_HOME=/usr/lib/jvm/java-{{ java_version }}-openjdk
+# JAVA_HOME is set in /etc/environment by java role
+[ -f /etc/environment ] && . /etc/environment
 export SPARK_HOME={{ spark_home }}
 export SPARK_CONF_DIR={{ spark_home }}/conf
 export SPARK_LOG_DIR={{ spark_home }}/logs

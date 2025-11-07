@@ -1,0 +1,6 @@
+---
+# Zookeeper role default variables
+zookeeper_port: 2181
+zookeeper_data_dir: "/var/lib/zookeeper"
+app_user: "spark"
+app_group: "spark"

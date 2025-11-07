@@ -1,0 +1,15 @@
+---
+# Spark role default variables
+spark_version: "3.5.0"
+spark_hadoop_version: "3"
+spark_download_url: "https://archive.apache.org/dist/spark/spark-{{ spark_version }}/spark-{{ spark_version }}-bin-hadoop{{ spark_hadoop_version }}.tgz"
+spark_home: "/opt/spark"
+spark_master_port: 7077
+spark_master_webui_port: 8080
+spark_worker_webui_port: 8081
+spark_worker_cores: 2
+spark_worker_memory: "2g"
+spark_worker_instances: 1
+app_user: "spark"
+app_group: "spark"
+aws_region: "eu-north-1"
